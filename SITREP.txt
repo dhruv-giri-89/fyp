@@ -1,0 +1,89 @@
+PROJECT SITREP - Decentralized Voting System (Fyp)
+==================================================
+REF: FULL RECONNAISSANCE - 2026-04-01
+
+1. ARCHITECTURAL OVERVIEW
+-------------------------
+The project is a full-stack voting application using a React frontend and a Node.js/Express backend. 
+It uses MySQL for relational data (via Prisma) and is architected to eventually include blockchain-based voting logic.
+
+2. BACKEND DEEP DIVE (/backend)
+-------------------------------
+ENTRY POINT: server.js
+- Standard Express setup on Port 5000.
+- Path: /api/auth -> authRoutes.js
+
+DATABASE (Prisma): prisma/schema.prisma
+- Provider: MySQL
+- Models:
+  * User: { id: Int, aadhaar: String (Unique), phone: String }
+  * OTP: { id: Int, aadhaar: String, otp: String (Hashed), expiresAt: DateTime, createdAt: DateTime }
+
+CONTROLLERS: controllers/authController.js
+- sendOTP: Validates 12-digit Aadhaar. Auto-creates users if missing. Hashes 6-digit random OTP using bcrypt.
+- verifyOTP: Checks hashed OTP & expiry. Returns JWT if valid.
+
+UTILITIES:
+- config/prisma.js: Centralized PrismaClient instance.
+- utils/otp.js: 6-digit numeric string generator.
+- .env: Stores DATABASE_URL and JWT_SECRET.
+
+3. FRONTEND DEEP DIVE (/frontend)
+--------------------------------
+STRECH: React 19 + Vite + Tailwind CSS 4 + React Router 7.
+
+COMPONENTS & PAGES:
+- App.jsx: Routing configuration (/ -> Login, /dashboard -> Dashboard).
+- pages/Login.jsx: 2-step authentication UI (Step 1: Aadhaar, Step 2: OTP).
+- pages/Dashboard.jsx: Initial shell for voting interactions.
+- pages/AuthPage.jsx: (Currently in development)
+- services/api.js: Pre-configured Axios instance for backend communication.
+
+4. FULL FILE LISTING
+--------------------
+- backend/
+    - server.js
+    - package.json
+    - .env
+    - .gitignore
+    - config/prisma.js
+    - prisma/schema.prisma
+    - routes/authRoutes.js
+    - controllers/authController.js
+    - utils/otp.js
+    - middleware/ (Empty)
+- frontend/
+    - index.html
+    - package.json
+    - vite.config.js
+    - tailwind.config.js
+    - src/
+        - main.jsx
+        - App.jsx
+        - App.css
+        - index.css
+        - pages/
+            - Login.jsx
+            - Dashboard.jsx
+            - AuthPage.jsx (New)
+        - services/
+            - api.js
+        - assets/ (Static images)
+
+5. CURRENT PROJECT STATUS
+-------------------------
+- [COMPLETE] Backend-to-DB connection via Prisma/MySQL.
+- [COMPLETE] JWT + OTP Authentication flow (Backend).
+- [COMPLETE] Basic React scaffolding with Routing.
+- [IN-PROGRESS] Integrating Aadhaar-OTP flow on Frontend.
+- [PENDING] Production SMS API integration (Currently logs to console).
+- [PENDING] Secure middleware for protected routes.
+- [PENDING] Core Voting Logic (Blockchain Smart Contracts).
+
+6. OTHER AI INSTRUCTIONS
+------------------------
+When picking up from here:
+1. Ensure MySQL server is running and `DATABASE_URL` in backend/.env is correct.
+2. Backend runs on `npm run dev` (Port 5000).
+3. Frontend runs on `npm run dev` (Vite port, usually 5173).
+4. For testing auth, check the Backend terminal for the generated OTP code.

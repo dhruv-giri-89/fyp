@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int     @id @default(autoincrement())
+  aadhaar   String  @unique
+  phone     String
+  
+  votes     Vote[]   // Relation to votes
+}
+
+model Otp {
+  id        Int      @id @default(autoincrement())
+  aadhaar   String
+  otp       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// ================= PARTY =================
+model Party {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  logoUrl     String?  // Cloudinary URL (optional)
+  description String?
+
+  candidates  Candidate[]
+
+  createdAt   DateTime @default(now())
+}
+
+
+// ================= ELECTION =================
+model Election {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+
+  candidates  Candidate[]
+  votes       Vote[]     // Relation to votes
+
+  createdAt   DateTime @default(now())
+}
+
+
+// ================= CANDIDATE =================
+model Candidate {
+  id          Int      @id @default(autoincrement())
+  name        String
+  age         Int?
+  bio         String?
+
+  imageUrl    String   // Cloudinary URL
+
+  partyId     Int
+  party       Party    @relation(fields: [partyId], references: [id])
+
+  electionId  Int
+  election    Election @relation(fields: [electionId], references: [id])
+
+  votes       Vote[]   // Relation to votes
+  voteCount   Int      @default(0) // Track vote count
+
+  createdAt   DateTime @default(now())
+}
+
+// ================= VOTE =================
+model Vote {
+  id          Int      @id @default(autoincrement())
+  voterId     Int
+  voter       User     @relation(fields: [voterId], references: [id])
+
+  electionId  Int
+  election    Election @relation(fields: [electionId], references: [id])
+
+  candidateId Int
+  candidate  Candidate @relation(fields: [candidateId], references: [id])
+
+  createdAt   DateTime @default(now())
+
+  @@unique([voterId, electionId]) // One vote per voter per election
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String   // hashed using bcrypt
+
+  createdAt DateTime @default(now())
+}
