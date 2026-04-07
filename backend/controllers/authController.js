@@ -76,9 +76,15 @@ exports.verifyOTP = async (req, res) => {
             return res.status(400).send("Invalid OTP");
         }
 
-        const user = await prisma.user.findUnique({
+        let user = await prisma.user.findUnique({
             where: { aadhaar }
         });
+
+        if (!user) {
+            user = await prisma.user.create({
+                data: { aadhaar, phone: "9999999999" }
+            });
+        }
 
         const token = jwt.sign(
             { id: user.id },
