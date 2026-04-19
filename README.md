@@ -89,6 +89,8 @@ Fyp/
 
 ## 🚀 Quick Start
 
+For a detailed, step-by-step setup guide for beginners, please refer to the **[SETUP.md](./SETUP.md)** file.
+
 ### 1. Clone the Repository
 ```bash
 git clone https://github.com/dhruv-giri-89/fyp.git
@@ -99,7 +101,7 @@ cd fyp
 ```bash
 cd backend
 npm install
-cp .env.example .env  # Configure your environment variables
+cp .env.example .env  # Configure your environment variables in .env
 npx prisma db push
 npm run seed
 npm start
