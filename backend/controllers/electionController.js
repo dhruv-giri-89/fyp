@@ -93,7 +93,7 @@ exports.getElectionById = async (req, res) => {
                         party: true
                     },
                     orderBy: {
-                        votes: 'desc'
+                        voteCount: 'desc'
                     }
                 }
             }
@@ -299,7 +299,7 @@ exports.getCompletedElections = async (req, res) => {
                         party: true
                     },
                     orderBy: {
-                        votes: 'desc'
+                        voteCount: 'desc'
                     }
                 }
             },

@@ -3,66 +3,33 @@ pragma solidity ^0.8.20;
 
 contract Voting {
     address public owner;
-    uint public candidateCount;
     
-    mapping(uint => uint) public votes;
-    mapping(address => bool) public hasVoted;
+    // electionId => (candidateId => voteCount)
+    mapping(uint => mapping(uint => uint)) public votes;
     
-    struct Candidate {
-        uint id;
-        string name;
-        uint voteCount;
-    }
+    // electionId => (address => bool)
+    mapping(uint => mapping(address => bool)) public hasVoted;
     
-    mapping(uint => Candidate) public candidates;
-    
-    event CandidateAdded(uint id, string name);
-    event VoteCast(address voter, uint candidateId);
+    event VoteCast(address voter, uint electionId, uint candidateId);
     
     constructor() {
         owner = msg.sender;
     }
     
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only admin can perform this action");
-        _;
-    }
-    
-    function addCandidate(string memory _name) public onlyOwner {
-        candidateCount++;
-        candidates[candidateCount] = Candidate(candidateCount, _name, 0);
-        emit CandidateAdded(candidateCount, _name);
-    }
-    
-    function vote(uint _candidateId) public {
-        require(!hasVoted[msg.sender], "You have already voted");
-        require(_candidateId > 0 && _candidateId <= candidateCount, "Invalid candidate");
+    function vote(uint _electionId, uint _candidateId) public {
+        require(!hasVoted[_electionId][msg.sender], "You have already voted in this election");
         
-        votes[_candidateId]++;
-        candidates[_candidateId].voteCount++;
-        hasVoted[msg.sender] = true;
+        votes[_electionId][_candidateId]++;
+        hasVoted[_electionId][msg.sender] = true;
         
-        emit VoteCast(msg.sender, _candidateId);
+        emit VoteCast(msg.sender, _electionId, _candidateId);
     }
     
-    function getVotes(uint _candidateId) public view returns (uint) {
-        return votes[_candidateId];
+    function getVotes(uint _electionId, uint _candidateId) public view returns (uint) {
+        return votes[_electionId][_candidateId];
     }
     
-    function getCandidate(uint _candidateId) public view returns (Candidate memory) {
-        require(_candidateId > 0 && _candidateId <= candidateCount, "Invalid candidate");
-        return candidates[_candidateId];
-    }
-    
-    function getAllCandidates() public view returns (Candidate[] memory) {
-        Candidate[] memory allCandidates = new Candidate[](candidateCount);
-        for (uint i = 1; i <= candidateCount; i++) {
-            allCandidates[i - 1] = candidates[i];
-        }
-        return allCandidates;
-    }
-    
-    function hasUserVoted(address _user) public view returns (bool) {
-        return hasVoted[_user];
+    function hasUserVoted(uint _electionId, address _user) public view returns (bool) {
+        return hasVoted[_electionId][_user];
     }
 }

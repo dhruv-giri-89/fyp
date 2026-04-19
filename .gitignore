@@ -60,3 +60,8 @@ typechain-types/
 # Temporary files
 *.tmp
 *.temp
+
+# Python
+venv/
+__pycache__/
+*.py[cod]

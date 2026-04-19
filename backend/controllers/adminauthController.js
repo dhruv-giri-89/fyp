@@ -123,3 +123,43 @@ exports.getAdminProfile = async (req, res) => {
         res.status(500).json({ message: "Error fetching admin profile" });
     }
 };
+
+// GET DASHBOARD STATS
+exports.getDashboardStats = async (req, res) => {
+    try {
+        const now = new Date();
+
+        const [
+            totalUsers,
+            totalElections,
+            totalCandidates,
+            totalParties,
+            activeElections
+        ] = await Promise.all([
+            prisma.user.count(),
+            prisma.election.count(),
+            prisma.candidate.count(),
+            prisma.party.count(),
+            prisma.election.count({
+                where: {
+                    startTime: { lte: now },
+                    endTime: { gte: now }
+                }
+            })
+        ]);
+
+        res.json({
+            stats: {
+                totalUsers,
+                totalElections,
+                totalCandidates,
+                totalParties,
+                activeElections
+            }
+        });
+
+    } catch (err) {
+        console.error("Error fetching dashboard stats:", err);
+        res.status(500).json({ message: "Error fetching dashboard stats" });
+    }
+};

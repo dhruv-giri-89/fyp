@@ -23,6 +23,26 @@ API.interceptors.request.use(
     (error) => {
         return Promise.reject(error);
     }
+);// 🔹 Handle 401 Unauthorized globally
+API.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            // Token is invalid or expired
+            localStorage.removeItem("token");
+            localStorage.removeItem("adminToken");
+            
+            // Redirect based on whether it was an admin route or user route
+            if (window.location.pathname.startsWith("/admin")) {
+                window.location.href = "/admin/login";
+            } else {
+                window.location.href = "/";
+            }
+        }
+        return Promise.reject(error);
+    }
 );
 
 export default API;

@@ -6,50 +6,64 @@ export default function Dashboard() {
     const [user, setUser] = useState(null);
     const [activeElections, setActiveElections] = useState([]);
     const [votedElections, setVotedElections] = useState([]);
+    const [completedElectionsCount, setCompletedElectionsCount] = useState(0);
+    const [nearestDeadlineHours, setNearestDeadlineHours] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
         // Get user info and elections
         const token = localStorage.getItem("token");
-        if (token) {
-            const fetchVoterData = async () => {
-                try {
-                    console.log("🔍 Fetching voter data...");
-                    
-                    // Fetch voter profile
-                    const profileResponse = await api.get("/voter/profile");
-                    console.log("✅ Profile response:", profileResponse.data);
-                    setUser(profileResponse.data.voter);
-
-                    // Fetch active elections
-                    const activeResponse = await api.get("/voter/elections/active");
-                    console.log("✅ Active elections response:", activeResponse.data);
-                    console.log("📊 Active elections count:", activeResponse.data.elections?.length || 0);
-                    setActiveElections(activeResponse.data.elections);
-
-                    // Fetch voting history
-                    const historyResponse = await api.get("/voter/history");
-                    console.log("✅ History response:", historyResponse.data);
-                    setVotedElections(historyResponse.data.votingHistory);
-                } catch (err) {
-                    console.error("❌ Error fetching voter data:", err);
-                    console.error("❌ Error details:", err.response?.data || err.message);
-                    // Fallback to mock data if API fails
-                    setUser({
-                        name: "John Doe",
-                        aadhaar: "XXXX-XXXX-1234"
-                    });
-                    setActiveElections([]);
-                    setVotedElections([]);
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            fetchVoterData();
+        
+        if (!token) {
+            navigate("/");
+            return;
         }
-    }, []);
+
+        const fetchVoterData = async () => {
+            try {
+                console.log("🔍 Fetching voter data...");
+                
+                // Fetch voter profile
+                const profileResponse = await api.get("/voter/profile");
+                setUser(profileResponse.data.voter);
+
+                // Fetch active elections
+                const activeResponse = await api.get("/voter/elections/active");
+                const active = activeResponse.data.elections || [];
+                setActiveElections(active);
+
+                // Fetch voting history
+                const historyResponse = await api.get("/voter/history");
+                setVotedElections(historyResponse.data.votingHistory);
+
+                // Fetch completed elections for results count
+                const completedResponse = await api.get("/elections/completed");
+                setCompletedElectionsCount(completedResponse.data.completedElections?.length || 0);
+
+                // Calculate nearest deadline for Time Left widget
+                if (active.length > 0) {
+                    const now = new Date();
+                    const nearest = active.reduce((acc, curr) => {
+                        const currEnd = new Date(curr.endTime);
+                        const accEnd = new Date(acc.endTime);
+                        return currEnd < accEnd ? curr : acc;
+                    });
+                    const hoursLeft = Math.max(0, Math.floor((new Date(nearest.endTime) - now) / (1000 * 60 * 60)));
+                    setNearestDeadlineHours(hoursLeft);
+                } else {
+                    setNearestDeadlineHours(null);
+                }
+            } catch (err) {
+                console.error("❌ Error fetching voter data:", err);
+                navigate("/"); // the axios interceptor should handle this, but as a fallback redirect
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchVoterData();
+    }, [navigate]);
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -89,7 +103,7 @@ export default function Dashboard() {
                         <div className="flex items-center space-x-4">
                             <div className="text-right">
                                 <p className="text-indigo-200 text-sm">Welcome back,</p>
-                                <p className="text-white font-semibold">{user?.name}</p>
+                                <p className="text-white font-semibold">{user?.name || "Verified Voter"}</p>
                             </div>
                             <button
                                 onClick={handleLogout}
@@ -114,8 +128,8 @@ export default function Dashboard() {
                                 </svg>
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold text-white">{user?.name}</h2>
-                                <p className="text-indigo-200">Aadhaar: {user?.aadhaar}</p>
+                                <h2 className="text-2xl font-bold text-white">{user?.name || "Verified Voter"}</h2>
+                                <p className="text-indigo-200 font-mono">ID: {user?.aadhaar}</p>
                             </div>
                         </div>
                         <div className="text-right">
@@ -155,17 +169,20 @@ export default function Dashboard() {
                         <p className="text-green-200 text-sm">Completed</p>
                     </div>
 
-                    <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-purple-500/30 hover:bg-white/20 transition cursor-pointer">
+                    <div 
+                        className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-purple-500/30 hover:bg-white/20 transition cursor-pointer"
+                        onClick={() => navigate('/results')}
+                    >
                         <div className="flex items-center justify-between mb-4">
                             <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
                                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                 </svg>
                             </div>
-                            <span className="text-3xl font-bold text-white">All</span>
+                            <span className="text-3xl font-bold text-white">{completedElectionsCount}</span>
                         </div>
                         <h3 className="text-white font-semibold">Results</h3>
-                        <p className="text-purple-200 text-sm">View statistics</p>
+                        <p className="text-purple-200 text-sm">Past elections</p>
                     </div>
 
                     <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-yellow-500/30 hover:bg-white/20 transition cursor-pointer">
@@ -175,10 +192,10 @@ export default function Dashboard() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
-                            <span className="text-3xl font-bold text-white">24h</span>
+                            <span className="text-3xl font-bold text-white">{nearestDeadlineHours !== null ? `${nearestDeadlineHours}l` : '--'}</span>
                         </div>
                         <h3 className="text-white font-semibold">Time Left</h3>
-                        <p className="text-yellow-200 text-sm">Next election</p>
+                        <p className="text-yellow-200 text-sm">{nearestDeadlineHours !== null ? 'Next election ends' : 'No active elections'}</p>
                     </div>
                 </div>
 

@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import ElectionManagement from "./ElectionManagement";
+import PartyManagement from "./PartyManagement";
 
 export default function AdminDashboard() {
     const [admin, setAdmin] = useState(null);
@@ -46,15 +48,9 @@ export default function AdminDashboard() {
                 api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             }
 
-            // Since we don't have specific admin endpoints yet, we'll use mock data
-            // In a real implementation, you would fetch this from your admin API
-            setStats({
-                totalUsers: 1247,
-                totalElections: 5,
-                totalCandidates: 23,
-                totalParties: 8,
-                activeElections: 2
-            });
+            // Fetch real data from admin stats endpoint
+            const response = await api.get("/admin/stats");
+            setStats(response.data.stats);
         } catch (err) {
             console.error("Error fetching dashboard stats:", err);
         } finally {
@@ -106,7 +102,7 @@ export default function AdminDashboard() {
             {/* Navigation Tabs */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
                 <div className="flex space-x-1 bg-black/20 p-1 rounded-lg">
-                    {["overview", "elections", "candidates", "parties", "users"].map((tab) => (
+                    {["overview", "elections", "parties"].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -234,9 +230,12 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                 )}
+                {/* Navigation Tabs Content */}
+                {activeTab === "elections" && <ElectionManagement />}
+                {activeTab === "parties" && <PartyManagement />}
 
                 {/* Other tabs would have their respective content */}
-                {activeTab !== "overview" && (
+                {activeTab !== "overview" && activeTab !== "elections" && activeTab !== "parties" && (
                     <div className="bg-white/10 backdrop-blur-lg p-8 rounded-xl border border-purple-500/30 text-center">
                         <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

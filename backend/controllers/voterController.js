@@ -32,11 +32,6 @@ exports.getActiveElections = async (req, res) => {
                             }
                         }
                     }
-                },
-                _count: {
-                    select: {
-                        candidates: true
-                    }
                 }
             },
             orderBy: {
@@ -322,15 +317,10 @@ exports.getElectionDetails = async (req, res) => {
                                 name: true,
                                 logoUrl: true
                             }
-                        },
-                        _count: {
-                            select: {
-                                votes: true
-                            }
                         }
                     },
                     orderBy: {
-                        name: 'asc'
+                        voteCount: 'desc'
                     }
                 }
             }

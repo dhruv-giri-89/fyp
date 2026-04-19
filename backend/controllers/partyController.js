@@ -138,7 +138,7 @@ exports.getPartyById = async (req, res) => {
                         election: true
                     },
                     orderBy: {
-                        votes: 'desc'
+                        voteCount: 'desc'
                     }
                 },
                 _count: {
